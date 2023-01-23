@@ -407,8 +407,11 @@ impl Display {
         let metrics = glyph_cache.font_metrics();
         let (cell_width, cell_height) = compute_cell_size(config, &metrics);
 
-        // Resize the window to account for the user configured size.
-        if let Some(dimensions) = config.window.dimensions() {
+        // Resize the window to account for the user configured size, prioritizing geometry
+        if let Some((width, height)) = config.window.geometry() {
+            let size = PhysicalSize::new(width as u32, height as u32);
+            window.set_inner_size(size);
+        } else if let Some(dimensions) = config.window.dimensions() {
             let size = window_size(config, dimensions, cell_width, cell_height, scale_factor);
             window.set_inner_size(size);
         }

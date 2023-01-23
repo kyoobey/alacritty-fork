@@ -57,6 +57,9 @@ pub struct WindowConfig {
 
     /// Initial dimensions.
     dimensions: Dimensions,
+
+    /// Initial geometry.
+    geometry: Geometry,
 }
 
 impl Default for WindowConfig {
@@ -74,6 +77,7 @@ impl Default for WindowConfig {
             opacity: Default::default(),
             padding: Default::default(),
             dimensions: Default::default(),
+            geometry: Default::default(),
         }
     }
 }
@@ -99,6 +103,39 @@ impl WindowConfig {
             warn!(
                 target: LOG_TARGET_CONFIG,
                 "Both `lines` and `columns` must be non-zero for `window.dimensions` to take \
+                 effect. Configured value of `{}` is 0 while that of `{}` is {}",
+                zero_key,
+                non_zero_key,
+                non_zero_value,
+            );
+
+            None
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn geometry(&self) -> Option<(f32, f32)> {
+        let (width, height) = (self.geometry.width, self.geometry.height);
+        let (width_is_non_zero, height_is_non_zero) = (width != 0, height != 0);
+
+        if width_is_non_zero && height_is_non_zero {
+            let x = f32::from(self.geometry.width).floor();
+            let y = f32::from(self.geometry.height).floor();
+            Some((x, y))
+        } else if width_is_non_zero || height_is_non_zero {
+            // Warn if either `width` or `height` is non-zero.
+
+            let (zero_key, non_zero_key, non_zero_value) = if width_is_non_zero {
+                ("width", "height", width)
+            } else {
+                ("height", "width", height)
+            };
+
+            warn!(
+                target: LOG_TARGET_CONFIG,
+                "Both `width` and `height` must be non-zero for `window.geometry` to take \
                  effect. Configured value of `{}` is 0 while that of `{}` is {}",
                 zero_key,
                 non_zero_key,
@@ -198,6 +235,16 @@ pub struct Dimensions {
 
     /// Window Height in character lines.
     pub lines: usize,
+}
+
+/// Window Geometry.
+#[derive(ConfigDeserialize, Default, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Geometry {
+    /// Window width in character columns.
+    pub width: u16,
+
+    /// Window Height in character lines.
+    pub height: u16,
 }
 
 /// Window class hint.
